@@ -1,7 +1,6 @@
 use arguments::{Comandos, Opts};
 use clap::Parser;
 use estruturas::Tecla;
-use input::ler_input;
 use tokio::{io::{self, AsyncReadExt, AsyncWriteExt}, net::{TcpListener, TcpStream}, sync::mpsc::{self, Receiver}, task};
 
 mod arguments;
@@ -59,6 +58,7 @@ async fn iniciar_servidor(porta: i32) -> io::Result<()> {
 
 #[cfg(not(target_family = "windows"))]
 async fn iniciar_cliente(ip_servidor: String) -> io::Result<()> {
+    use input::ler_input;
     let stream = TcpStream::connect(ip_servidor).await?;
     let (tx, rx) = mpsc::channel(10);
 
