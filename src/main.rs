@@ -57,6 +57,7 @@ async fn iniciar_servidor(porta: i32) -> io::Result<()> {
     }
 }
 
+#[cfg(not(target_family = "windows"))]
 async fn iniciar_cliente(ip_servidor: String) -> io::Result<()> {
     let stream = TcpStream::connect(ip_servidor).await?;
     let (tx, rx) = mpsc::channel(10);
@@ -64,6 +65,12 @@ async fn iniciar_cliente(ip_servidor: String) -> io::Result<()> {
     ler_input(tx);
     enviar_key(rx, stream).await;
 
+    Ok(())
+}
+
+#[cfg(target_family = "windows")]
+async fn iniciar_cliente(ip_servidor: String) -> io::Result<()> {
+    println!("Sai do windows colega");
     Ok(())
 }
 
