@@ -31,7 +31,7 @@ pub fn get_keyboard() -> i32 {
     }
 }
 
-pub fn get_arduino_scancodes(code: u16) -> (u16, bool) {
+pub fn get_arduino_scancodes(code: u16) -> (u8, bool) {
     match code {
         1 => (0x76, false),
         59 => (0x05, false),
