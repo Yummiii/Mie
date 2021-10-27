@@ -14,7 +14,7 @@ mod serial;
 async fn main() -> io::Result<()> {
     let opts = Opts::parse();
     match opts.subcmd {
-        Comandos::Servidor(serv) => iniciar_servidor(serv.porta).await,
+        Comandos::Servidor(serv) => iniciar_servidor(serv.porta, serv.porta_serial).await,
         Comandos::Cliente(cliente) => iniciar_cliente(cliente.ip_servidor).await,
     }
 }
@@ -23,14 +23,14 @@ lazy_static::lazy_static! {
     static ref CHAVE: Vec<u8> = base64::decode("M3Q2dzl6JEMmRilKQE5jUmZValhuWnI0dTd4IUElRCo=").unwrap();
 }
 
-async fn iniciar_servidor(porta: i32) -> io::Result<()> {
+async fn iniciar_servidor(porta: i32, porta_serial: String) -> io::Result<()> {
     println!("Iniciando o servidor na porta: {}", porta);
     let listener = TcpListener::bind(format!("0.0.0.0:{}", porta)).await?;
-    //let serial_port = serialport::new("COM3", 9600).open().unwrap();
+    let serial_port = serialport::new(porta_serial, 9600).open().unwrap();
 
     loop {
         match listener.accept().await {
-            Ok((mut socket, addr)) => {
+            Ok((mut socket, addr)) =>  {
                 println!("Conexão de: {:?}", addr);
                 task::spawn(async move {
                     loop {
@@ -51,8 +51,8 @@ async fn iniciar_servidor(porta: i32) -> io::Result<()> {
                             .deserialize::<Tecla>(&mut buff)
                             .expect("Algum macaco fez merda");
                         //println!("{:#?}", decoded);
-                        let mut serial_port = serialport::new("COM3", 9600).open().unwrap();
-                        enviar_dados(decoded, &mut serial_port);
+                        //let a = serial_port.
+                        enviar_dados(decoded, serial_port.as_ref().clone());
                     }
                 });
             }
