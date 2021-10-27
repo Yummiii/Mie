@@ -16,9 +16,9 @@ pub enum Comandos {
 
 #[derive(Parser, Debug)]
 pub struct Servidor {
-    #[clap(short, long, about = "Porta que o servidor ira iniciar (default: 5000)", default_value = "5000")]
+    #[clap(long, about = "Porta que o servidor ira iniciar (default: 5000)", default_value = "5000")]
     pub porta: i32,
-    #[clap(short, long, about = "Porta serial que esta o arduino")]
+    #[clap(long, about = "Porta serial que esta o arduino")]
     pub porta_serial: String
 }
 
