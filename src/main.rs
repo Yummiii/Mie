@@ -74,10 +74,10 @@ async fn iniciar_cliente(ip_servidor: String) -> io::Result<()> {
     Ok(())
 }
 
-async fn enviar_key(mut rx: Receiver<(bool, u16)>, mut stream: TcpStream) {
-    while let Some((pressed,  key)) = rx.recv().await {
+async fn enviar_key(mut rx: Receiver<(bool, u16, bool)>, mut stream: TcpStream) {
+    while let Some((pressed,  key, special)) = rx.recv().await {
         let bc = bincode_aes::with_key(bincode_aes::create_key(CHAVE.clone()).unwrap());
-        let payload = bc.serialize(&Tecla { key, pressed }).unwrap();
+        let payload = bc.serialize(&Tecla { key, pressed, special }).unwrap();
         stream.write_all(&payload).await.unwrap();
     }
 }
