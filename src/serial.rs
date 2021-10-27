@@ -10,10 +10,4 @@ pub fn enviar_dados(tecla: Tecla, port: &mut Box<dyn SerialPort>) {
 
     port.write(&buf).unwrap();
     println!("{:?}", buf);
-
-    let mut serial_buf: Vec<u8> = vec![0; 9];
-    match port.read(serial_buf.as_mut_slice()) {
-        Ok(t) => println!("{}", String::from_utf8_lossy(&serial_buf[..t])),
-        _ => println!("a")
-    }
 }

@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::{sync::Arc, thread};
 
 use arguments::{Comandos, Opts};
 use clap::Parser;
@@ -33,13 +33,14 @@ lazy_static::lazy_static! {
 
 async fn iniciar_servidor(porta: i32, porta_serial: String) -> io::Result<()> {
     println!("Iniciando o servidor na porta: {}", porta);
-    let listener = TcpListener::bind(format!("127.0.0.1:{}", porta)).await?;
+    let listener = TcpListener::bind(format!("0.0.0.0:{}", porta)).await?;
     let (tx, mut rx) = mpsc::channel(10);
     let tx = Arc::new(tx);
 
-    task::spawn(async move {
+    thread::spawn(move || {
         let mut serial_port = serialport::new(porta_serial, 9600).open().unwrap();
-        while let Some(tecla) = rx.recv().await {
+        while let Some(tecla) = rx.blocking_recv() {
+            println!("{:?}", tecla);
             enviar_dados(tecla, &mut serial_port);
         }
     });
