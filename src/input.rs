@@ -2,7 +2,7 @@ use std::thread;
 use tokio::sync::mpsc::Sender;
 
 #[cfg(not(target_family = "windows"))]
-pub fn ler_input(tx: Sender<(bool, u16, bool)>) {
+pub fn ler_input(tx: Sender<(bool, u8, bool)>) {
     use evdev::{Device, InputEventKind};
     thread::spawn(move || {
         let mut device = Device::open(format!("/dev/input/event{}", get_keyboard())).unwrap();
