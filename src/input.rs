@@ -2,21 +2,23 @@ use std::thread;
 use tokio::sync::mpsc::Sender;
 
 #[cfg(not(target_family = "windows"))]
-pub fn ler_input(tx: Sender<(bool, u8, bool)>) {
+pub fn ler_input(tx: Sender<(bool, u8, bool, u16)>) {
     use evdev::{Device, InputEventKind};
     thread::spawn(move || {
+
         let mut device = Device::open(format!("/dev/input/event{}", get_keyboard())).unwrap();
         loop {
             for ev in device.fetch_events().unwrap() {
                 if let InputEventKind::Key(key) = ev.kind() {
                     if ev.value() != 2 {
                         let scan_code = get_arduino_scancodes(key.code());
-                        tx.blocking_send((ev.value() == 1, scan_code.0, scan_code.1)).unwrap();
+                        tx.blocking_send((ev.value() == 1, scan_code.0, scan_code.1, key.code())).unwrap();
                         println!("{:?} =-= {}", key, ev.value());
                     }
                 }
             }
         }
+
     });
 }
 

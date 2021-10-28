@@ -1,13 +1,13 @@
 use std::{sync::Arc, thread};
-
 use arguments::{Comandos, Opts};
 use clap::Parser;
 use estruturas::Tecla;
-use serialport::SerialPort;
 use tokio::{
     io::{self, AsyncReadExt, AsyncWriteExt},
     net::{TcpListener, TcpStream},
-    sync::mpsc::{self, Receiver},
+    sync::{
+        mpsc::{self, Receiver},
+    },
     task,
 };
 
@@ -28,7 +28,7 @@ async fn main() -> io::Result<()> {
 }
 
 lazy_static::lazy_static! {
-    static ref CHAVE: Vec<u8> = base64::decode("M3Q2dzl6JEMmRilKQE5jUmZValhuWnI0dTd4IUElRCo=").unwrap();
+    pub static ref CHAVE: Vec<u8> = base64::decode("M3Q2dzl6JEMmRilKQE5jUmZValhuWnI0dTd4IUElRCo=").unwrap();
 }
 
 async fn iniciar_servidor(porta: i32, porta_serial: String) -> io::Result<()> {
@@ -54,7 +54,9 @@ async fn iniciar_servidor(porta: i32, porta_serial: String) -> io::Result<()> {
                 let mut buf = [0; 53];
                 socket.read(&mut buf).await.unwrap();
                 let bc = bincode_aes::with_key(bincode_aes::create_key(CHAVE.clone()).unwrap());
-                let letra = bc.deserialize::<Tecla>(&mut buf.to_vec()).expect("algum monkey");
+                let letra = bc
+                    .deserialize::<Tecla>(&mut buf.to_vec())
+                    .expect("algum monkey");
                 tx_tmp.send(letra).await.unwrap();
             }
         });
@@ -79,17 +81,34 @@ async fn iniciar_cliente(ip_servidor: String) -> io::Result<()> {
     Ok(())
 }
 
-async fn enviar_key(mut rx: Receiver<(bool, u8, bool)>, mut stream: TcpStream) {
-    while let Some((pressed, key, special)) = rx.recv().await {
-        let bc = bincode_aes::with_key(bincode_aes::create_key(CHAVE.clone()).unwrap());
-        let payload = bc
-            .serialize(&Tecla {
-                key,
-                pressed,
-                special,
-            })
-            .unwrap();
-        println!("{}", payload.len());
-        stream.write_all(&payload).await.unwrap();
+async fn enviar_key(mut rx: Receiver<(bool, u8, bool, u16)>, mut stream: TcpStream) {
+    let mut keys_log = [0; 3];
+    let mut i = 0;
+    let mut paused = false;
+    while let Some((pressed, key, special, key_code)) = rx.recv().await {
+        if pressed {
+            if i >= 3 {
+                i = 0;
+            }
+
+            keys_log[i] = key_code;
+            if keys_log[0] == 29 && keys_log[1] == 56 && keys_log[2] == 32 {
+                paused = !paused;
+                println!("Pausado: {}", paused);
+            }
+            i = i + 1;
+        }
+
+        if !paused {
+            let bc = bincode_aes::with_key(bincode_aes::create_key(CHAVE.clone()).unwrap());
+            let payload = bc
+                .serialize(&Tecla {
+                    key,
+                    pressed,
+                    special,
+                })
+                .unwrap();
+            stream.write_all(&payload).await.unwrap();
+        }
     }
 }
